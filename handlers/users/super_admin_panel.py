@@ -60,7 +60,7 @@ async def show_admins(call: types.CallbackQuery):
         buttons.insert(InlineKeyboardButton(text=f"{admin[2]}", callback_data=f"admin:{admin[1]}"))
     # Dasturchi @Mrgayratov kanla @Kingsofpy
     buttons.add(InlineKeyboardButton(text="➕ Admin qo'shish", callback_data="add_admin"))
-    buttons.insert(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_main_menu"))
+    buttons.insert(InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_main_menu"))
     await call.message.edit_text(text="👤 Adminlar", reply_markup=buttons)
 #Dasturchi @Mrgayratov kanla @Kingsofpy
 @dp.callback_query_handler(IsSuperAdmin(), text_contains="admin:", state="*")
@@ -75,7 +75,7 @@ async def del_admin_method(call: types.CallbackQuery):
         buttons = InlineKeyboardMarkup(row_width=1)
 
         buttons.insert(InlineKeyboardButton(text="❌ Admindan bo'shatish", callback_data=f"deladm:{data[1]}"))
-        buttons.insert(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admins"))
+        buttons.insert(InlineKeyboardButton(text="⬅️ Назад", callback_data="admins"))
 
         await call.message.edit_text(text=text, reply_markup=buttons)
 #Dasturchi @Mrgayratov kanla @Kingsofpy
@@ -145,7 +145,7 @@ async def channel_list(call: types.CallbackQuery):
         buttons.insert(InlineKeyboardButton(text=f"{admin[1]}", callback_data=f"delchanel:{admin[1]}"))
 
     buttons.add(InlineKeyboardButton(text="➕ Kanal qo'shish", callback_data="add_channel"))
-    buttons.insert(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_main_menu"))
+    buttons.insert(InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_main_menu"))
     await call.message.edit_text(text=text, reply_markup=buttons)
 
 @dp.callback_query_handler(IsSuperAdmin(), text_contains="delchanel:", state="*")
@@ -170,7 +170,7 @@ async def channel_list(call: types.CallbackQuery):
     await call.message.edit_text(text=text)
 
     buttons = InlineKeyboardMarkup(row_width=1)
-    buttons.insert(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_main_menu"))
+    buttons.insert(InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_main_menu"))
     await call.message.edit_text(text=text, reply_markup=buttons)
 # ADMINLARNI KORISH
 
@@ -186,7 +186,7 @@ async def stat(call : types.CallbackQuery):
         await call.message.delete()
         await call.message.answer(f"<b>👥 Bot foydalanuvchilari soni: {(x)} nafar\n</b>"
                                   f"<b>⏰ Soat: {soat_minut_sekund}\n</b>"
-                                  f"<b>📆 Sana: {yil_oy_kun}</b>",reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("◀️ Orqaga",callback_data="back_to_main_menu")))
+                                  f"<b>📆 Sana: {yil_oy_kun}</b>",reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("◀️ Назад",callback_data="back_to_main_menu")))
 # STATISKA KORISH UCHUN
 
 # ADMINGA SEND FUNC
