@@ -12,14 +12,11 @@ from filters import IsUser, IsSuperAdmin, IsGuest
 from filters.admins import IsAdmin
 from keyboards.inline.main_menu_super_admin import main_menu_for_super_admin, main_menu_for_admin
 from loader import dp, db, bot
-from states.send_chanell import SuperAdminStateChannel
 from utils.files.spotify import SearchFromSpotify
 from utils.files.download_spotify import DownloadMusic
 logging.basicConfig(level=logging.INFO)
 import re,json
-from .tiktok import TikTokDownlaoder
 from tiktok_downloader import snaptik
-from .shazam import ShazamIO
 import os, requests
 from .insta import FastDLAppDownloader
 from utils.files.shazam import shazamtop
@@ -56,49 +53,26 @@ youtube_regex = r'(https?:\/\/(?:www\.)?youtube\.com\/watch\?v=[a-zA-Z0-9_-]+)'
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
 async def handle_text(message: types.Message):
     text = message.text
+
     if re.search(instagram_regex, text):
         msg_del = await bot.send_chat_action(message.chat.id, types.ChatActions.TYPING)
-        app = FastDLAppDownloader()
-        vid = app.download_url(text)
-        if vid:
+        download_data = await instadownloader(text)
+
+        if download_data:
             try:
-                await msg_del.delete()
-                await bot.send_document(message.chat.id, vid, caption="Завантажено через @UltimateSaverBot")
-                with open(f"{message.message_id}.mp4", 'wb') as video:
-                    rrr = requests.get(vid)
-                    video.write(rrr.content)
-                input_file = types.InputFile(f"{message.message_id}.mp4")
-                shazammusic = await shazamtop(f"{message.message_id}.mp4")
-                title = shazammusic['title']
-                if title is not None:
-                    musics = SearchFromSpotify(track_name=title, limit=5)
-                    audio_urls = DownloadMusic(musics)
-                inline_kbs = types.InlineKeyboardMarkup()
-                os.remove(f"{message.message_id}.mp4")
-
-
-                    
-                
+                if download_data['Type'] == 'video':
+                    await bot.send_video(message.chat.id, download_data['media'], caption="Завантажено через @UltimateSaverBot")
+                elif download_data['Type'] == 'image':
+                    await bot.send_photo(message.chat.id, download_data['media'], caption="Завантажено через @UltimateSaverBot")
+                elif download_data['Type'] == 'carousel':
+                    await bot.send_media_group(message.chat.id, [types.InputMediaPhoto(media) for media in download_data['media']], caption="Завантажено через @UltimateSaverBot")
+                elif download_data['Type'] == 'story':
+                    await bot.send_video(message.chat.id, download_data['media'], caption="Завантажено через @UltimateSaverBot")
             except Exception as err:
-                with open(f"{message.message_id}.mp4", 'wb') as video:
-                    rrr = requests.get(vid)
-                    video.write(rrr.content)
-                input_file = types.InputFile(f"{message.message_id}.mp4")
-                await bot.send_document(message.chat.id, document=input_file,caption="Завантажено через @UltimateSaverBot")
-                shazammusic = await shazamtop(f"{message.message_id}.mp4")
-                title = shazammusic['title']
-
-
-                os.remove(f"{message.message_id}.mp4")
-            
-            with open(f"{message.message_id}.mp4", 'wb') as video:
-                rrr = requests.get(vid)
-                video.write(rrr.content)
-            shazammusic = await shazamtop(f"{message.message_id}.mp4")
-            title = shazammusic['title']
-
-            os.remove(f"{message.message_id}.mp4")
-            
+                print(err)
+                await message.answer("<b>Вибачте, сталася помилка при завантаженні вмісту, спробуйте ще 😔</b>")
+        else:
+            await message.answer("<b>Не вдалося знайти вміст за цим посиланням 😔</b>")
 
     elif "tiktok.com" in text:
         msg_del = await bot.send_chat_action(message.chat.id, types.ChatActions.TYPING)
@@ -111,18 +85,19 @@ async def handle_text(message: types.Message):
         await bot.send_video(message.chat.id, video=input_file,caption="Завантажено через @UltimateSaverBot")
         os.remove(f"{message.message_id}.mp4")
 
-
     elif any(substring in text for substring in ["youtube"]):
         msg_del = await bot.send_chat_action(message.chat.id, types.ChatActions.TYPING)
 
-        getUrl = requests.get("https://youtube-dl.wave.video/info?url={}&type=video".format(text))
-        getLink = getUrl.json()['formats'][0]['url']
-        # getThumbLink = getUrl.json()['thumbnail']
+        r = requests.get(f"https://youtube-dl.wave.video/info?url={text}&type=video")
+        print(r.status_code)
+
+        vid = r.json().get('formats', [{}])[-1].get('downloadUrl')
 
         try: 
-            await bot.send_video(chat_id=message.chat.id, video=getLink, caption="Завантажено через @UltimateSaverBot")
+            await bot.send_video(chat_id=message.chat.id, video=vid, caption="Завантажено через @UltimateSaverBot")
         except Exception as err:
-            await message.answer("<b> Вибачте, щось пішло не так 😔</b>")
+            print(err)
+            await message.answer("<b>Вибачте, сталася помилка при завантаженні вмісту, спробуйте ще 😔</b>")
 
 
 
