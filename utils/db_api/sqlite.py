@@ -40,6 +40,7 @@ class Database:
             id INTEGER UNIQUE,
             user_id INTEGER NOT NULL UNIQUE,
             Name varchar(255) NOT NULL,
+            active INTEGER DEFAULT 1,
             PRIMARY KEY (id AUTOINCREMENT)
             );
 """
@@ -55,13 +56,13 @@ class Database:
     def stat(self):
         return self.execute(f"SELECT COUNT(*) FROM Users;", fetchone=True)
 
-    def add_user(self, user_id: int, name: str):
+    def add_user(self, user_id: int, name: str, active: int):
         # SQL_EXAMPLE = "INSERT INTO Users(id, Name, email) VALUES(1, 'John', 'John@gmail.com')"
 
         sql = """
-        INSERT INTO Users(user_id, Name) VALUES(?, ?)
+        INSERT INTO Users(user_id, Name, active) VALUES(?, ?, ?)
         """
-        self.execute(sql, parameters=(user_id, name), commit=True)
+        self.execute(sql, parameters=(user_id, name, active), commit=True)
 
     def is_user(self, **kwargs):
         # SQL_EXAMPLE = "SELECT * FROM Users where id=1 AND Name='John'"
@@ -72,7 +73,7 @@ class Database:
 
     def select_all_users(self):
         sql = """
-        SELECT * FROM Users
+        SELECT `user_id`, `active` FROM Users
         """
         return self.execute(sql, fetchall=True)
 
@@ -85,6 +86,10 @@ class Database:
 
     def count_users(self):
         return self.execute("SELECT COUNT(*) FROM Users;", fetchone=True)
+
+    def set_active(self, user_id, active):
+        sql = "UPDATE Users SET active = ? WHERE user_id = ?"
+        self.execute(sql, parameters=(active, user_id), commit=True)
 
     def update_user_email(self, email, id):
         # SQL_EXAMPLE = "UPDATE Users SET email=mail@gmail.com WHERE id=12345"

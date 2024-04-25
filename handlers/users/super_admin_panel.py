@@ -1,7 +1,7 @@
 import time
 import datetime
 
-from aiogram import types
+from aiogram import types, exceptions
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 #Dasturchi @Mrgayratov kanla @Kingsofpy
@@ -9,6 +9,9 @@ from filters import IsSuperAdmin
 from keyboards.inline.main_menu_super_admin import main_menu_for_super_admin, back_to_main_menu
 from loader import dp, db, bot
 from states.admin_state import SuperAdminState
+
+# Глобальний лічильник користувачів, які отримали повідомлення
+received_messages_count = 0
 
 # ADMIN TAYORLASH VA CHIQARISH QISMI UCHUN
 @dp.callback_query_handler(IsSuperAdmin(), text="add_admin", state="*")
@@ -226,34 +229,48 @@ async def send_advertisement_to_user(message: types.Message,state: FSMContext):
 # Foydalanuvchilar SEND FUNC
 @dp.callback_query_handler(IsSuperAdmin(), text="send_advertisement", state="*")
 async def send_advertisement(call: types.CallbackQuery):
+    global received_messages_count
     await call.answer(cache_time=1)
+    # Редагування повідомлення з клавіатурою
     await call.message.edit_text("Подати оголошення...\n"
                                  "або натисніть скасувати", reply_markup=back_to_main_menu)
+    # Встановлення стану
     await SuperAdminState.SUPER_ADMIN_STATE_GET_ADVERTISEMENT.set()
+    received_messages_count = 0
 
 
 @dp.message_handler(IsSuperAdmin(), state=SuperAdminState.SUPER_ADMIN_STATE_GET_ADVERTISEMENT,
                     content_types=types.ContentTypes.ANY)
 async def send_advertisement_to_user(message: types.Message,state: FSMContext):
+    global received_messages_count
     users =  db.stat()
     for x in users:
         await message.answer(f"📢 Почалася розсилка реклами...\n"
-                             f"📊 Кількість ПДП: {x} ta\n"
+                             f"📊 Кількість підписників: {x}\n"
                              f"🕒 Зачекайте...\n")
         user = db.select_all_users()
         for i in user:
-            user_id= i[1]
+            user_id= i[0]
+
             try:
                 await bot.copy_message(chat_id=user_id, from_chat_id=message.chat.id,
-                                       message_id=message.message_id, caption=message.caption,
-                                       reply_markup=message.reply_markup, parse_mode=types.ParseMode.MARKDOWN)
+                                    message_id=message.message_id, caption=message.caption,
+                                    reply_markup=message.reply_markup, parse_mode=types.ParseMode.MARKDOWN)
+                db.set_active(user_id, 1)
+                received_messages_count += 1  # Збільшення лічильника користувачів, які отримали повідомлення
 
                 time.sleep(0.5)
+            except exceptions.BotBlocked:
+                db.set_active(user_id, 0)
+                print(f"Користувач {user_id} заблокував бота.")
+
             except Exception as e:
-                print(e)
+                print(f"Сталася помилка при надсиланні повідомлення користувачу {user_id}: {e}")
 
+        await message.answer(f"✅ Оголошення успішно відправлено!\n"
+                     f"Кількість користувачів, які отримали повідомлення: {received_messages_count}",
+                     reply_markup=main_menu_for_super_admin)
 
-        await message.answer("✅ Оголошення успішно відправлено!", reply_markup=main_menu_for_super_admin)
         await state.finish()
 # Foydalanuvchilar SEND FUNC
 
